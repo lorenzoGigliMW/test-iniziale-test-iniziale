@@ -43,11 +43,44 @@ setFilter(filter) {
 setTasks(taskk) {
   this.setState({tasks: taskk})
 } 
-deleteTask=(id)=> {             //visualizza task che non hanno un determinato id "eliminato"
+ deleteTask=(id)=> {   
+  
+    fetch(`http://localhost:3005/api/todo/del/${id}`, {
+      method: 'DELETE'
+    })
+      .then(response => { 
+        //visualizza task che non hanno un determinato id "eliminato"
     const remainingTasks = this.state.tasks.filter((task) => id !== task.id);
     this.setTasks(remainingTasks);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        // handle success
+      })
+      .catch(error => {
+        console.error('There was a problem with the DELETE request:', error);
+        // handle error 
+   
+      });
   }
+
+
+  
 editTask=(id, newName)=> {
+ 
+  fetch('http://localhost:3005/api/todo/edit/' + id, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      name: newName
+    })
+  }) 
+ 
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error(error)) 
     const editedTaskList = this.state.tasks.map((task) => {
     // if this task has the same ID as the edited task
       if (id === task.id) {
@@ -57,20 +90,43 @@ editTask=(id, newName)=> {
       return task;
     });
     this.setTasks(editedTaskList);
-  }
-
-   // const [tasks, setTasks] = useState(props.tasks);
+  
+}
     
-    addTask=(name)=> {                  //aggiunge task
-      if(name !==""){
-      const newTask = { id: `todo-${nanoid()}`, name, completed: false };  // nano serve per gli id univoci
+addTask=(idAdd,nameAdd)=> {                  //aggiunge task
+    fetch('http://localhost:3005/api/todo/add', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    id: idAdd, 
+    name: nameAdd
+  })
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error(error))
+ const newTask = { id: `todo-${nanoid()}`, nameAdd, completed: false };  // nano serve per gli id univoci
       this.setTasks([...this.state.tasks, newTask])
-      alert("task "+ name +" aggiunta");
-    }else{
-    alert("Impossibile creare task senza nome");}
+
   }
 
-  toggleTaskCompleted=(id)=> {
+  toggleTaskCompleted=(id,completed)=> {
+    fetch('http://localhost:3005/api/todo/toggle/' + id, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        completed:!completed,
+        id:id
+      })
+    }) 
+   
+    .then(response => response.json())
+    .then(data => console.log(data))
+    .catch(error => console.error(error)) 
     const updatedTasks = this.state.tasks.map((task) => {
       // if this task has the same ID as the edited task
       if (id === task.id) {
@@ -111,50 +167,35 @@ editTask=(id, newName)=> {
 
  
   
-
-//   const taskList = tasks.filter(FILTER_MAP[filter]).map((task) => (  //mappo solo quelli che rispecchiano il filtro
-//     <Todo
-//     id={task.id}
-//     name={task.name}
-//     completed={task.completed}
-//     key={task.id}
-//     toggleTaskCompleted={toggleTaskCompleted}
-//     deleteTask={deleteTask}
-//     editTask={editTask}
-//   />
-// )
-// );
-
-// tasksNoun = taskList.length !== 1 ? 'tasks' : 'task';
-// headingText = `${taskList.length} ${tasksNoun} remaining`;
-// listHeadingRef = useRef(null);
-
-// prevTaskLength = usePrevious(this.state.tasks.length);   //Gestione focus da tastiera dopo delete
-// useEffect(() => {                                    //
-//   if (this.state.tasks.length - prevTaskLength === -1) {        //
-//     listHeadingRef.current.focus();
-//   }
-// }, [this.state.tasks.length, prevTaskLength]);
+visualizzaTodo = () => {//filtro
+  // contesto della funzione dentro
+  const uri='http://localhost:3005/api/todos'
+  fetch(uri)
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error(error))
+}
 
 componentDidMount() {
-  // if (this.state.tasks.length - prevTaskLength === -1) {        //
-  //   listHeadingRef.current.focus();
-  // }
+this.visualizzaTodo();
 }
 
 componentDidUpdate(prevProps, prevState, snapshot) {
   if (this.state.tasks.length !== prevState.tasks.length) {        //
     this.listHeadingRef.current.focus();
   }
-
 }
-//   // Changing the state after 2 sec
-//   // from the time when the component
-//   // is rendered
-//   setTimeout(() => {
-//     this.setState({ color: 'wheat' });
-//   }, 2000);
-//}
+
+// export const fetchPosts = () =&gt; async (dispatch) =&gt; {
+//   try {
+//   const response = await fetch(&apos;https://jsonplaceholder.typicode.com/posts&apos;);
+//   const data = await response.json();
+//   dispatch({ type: &apos;FETCH_POSTS&apos;, payload: data });
+//   } catch (error) {
+//   console.log(error);
+//   }
+//  };
+
   render =() => {
     const tasksNoun = this.taskList().length !== 1 ? 'tasks' : 'task';
     const headingText = `${this.taskList().length} ${tasksNoun} remaining`;
